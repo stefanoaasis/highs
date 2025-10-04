@@ -108,6 +108,13 @@
 //! assert_eq!(solved.get_solution().columns(), vec![2.5, 1.]);
 //! ```
 
+/// Defines a continuous variable
+pub const VARTYPE_CONTINUOUS: i32 = 0;
+/// Defines a variable to take on only integer values
+pub const VARTYPE_INTEGER: i32 = 1;
+/// Defines a variable to take on 0 or be bounded [lb,ub]
+pub const VARTYPE_SEMICONTINUOUS: i32 = 2;
+
 use std::convert::{TryFrom, TryInto};
 use std::ffi::{c_void, CString};
 use std::num::TryFromIntError;
@@ -179,13 +186,13 @@ where
         &mut self,
         col_factor: f64,
         bounds: B,
-        is_integral: bool,
+        var_type: i32,
     ) {
-        if is_integral && self.integrality.is_none() {
+        if var_type != VARTYPE_CONTINUOUS && self.integrality.is_none() {
             self.integrality = Some(vec![0; self.num_cols()]);
         }
         if let Some(integrality) = &mut self.integrality {
-            integrality.push(if is_integral { 1 } else { 0 });
+            integrality.push(var_type);
         }
         self.colcost.push(col_factor);
         let low = bound_value(bounds.start_bound()).unwrap_or(f64::NEG_INFINITY);
@@ -261,12 +268,12 @@ pub enum Sense {
 
 impl Model {
     /// Return pointer to underlying HiGHS model
-    pub fn as_ptr(&self) -> *const c_void{
+    pub fn as_ptr(&self) -> *const c_void {
         self.highs.ptr()
     }
 
     /// Return mutable pointer to underlying HiGHS model
-    pub fn as_mut_ptr(&mut self) -> *mut c_void{
+    pub fn as_mut_ptr(&mut self) -> *mut c_void {
         self.highs.mut_ptr()
     }
 
@@ -452,10 +459,7 @@ impl Model {
                 bound_value(bounds.start_bound()).unwrap_or(f64::NEG_INFINITY),
                 bound_value(bounds.end_bound()).unwrap_or(f64::INFINITY),
                 rows.len().try_into().unwrap(),
-                rows.into_iter()
-                    .map(|r| r.0)
-                    .collect::<Vec<_>>()
-                    .as_ptr(),
+                rows.into_iter().map(|r| r.0).collect::<Vec<_>>().as_ptr(),
                 factors.as_ptr()
             ))
         }?;
@@ -602,12 +606,12 @@ impl HighsPtr {
 
 impl SolvedModel {
     /// Return pointer to underlying HiGHS model
-    pub fn as_ptr(&self) -> *const c_void{
+    pub fn as_ptr(&self) -> *const c_void {
         self.highs.ptr()
     }
 
     /// Return mutable pointer to underlying HiGHS model
-    pub fn as_mut_ptr(&mut self) -> *mut c_void{
+    pub fn as_mut_ptr(&mut self) -> *mut c_void {
         self.highs.mut_ptr()
     }
 

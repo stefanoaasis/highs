@@ -4,7 +4,7 @@ use std::convert::TryInto;
 use std::ops::RangeBounds;
 use std::os::raw::c_int;
 
-use crate::Problem;
+use crate::{Problem, VARTYPE_CONTINUOUS};
 
 /// Represents a constraint
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -52,7 +52,7 @@ impl Problem<ColMatrix> {
         bounds: B,
         row_factors: I,
     ) {
-        self.add_column_with_integrality(col_factor, bounds, row_factors, false);
+        self.add_column_with_integrality(col_factor, bounds, row_factors, VARTYPE_CONTINUOUS);
     }
 
     /// Same as add_column, but forces the solution to contain an integer value for this variable.
@@ -75,8 +75,9 @@ impl Problem<ColMatrix> {
         col_factor: f64,
         bounds: B,
         row_factors: I,
+        var_type: i32,
     ) {
-        self.add_column_with_integrality(col_factor, bounds, row_factors, true);
+        self.add_column_with_integrality(col_factor, bounds, row_factors, var_type);
     }
 
     /// Same as add_column, but lets you define whether the new variable should be integral or continuous.
@@ -91,7 +92,7 @@ impl Problem<ColMatrix> {
         col_factor: f64,
         bounds: B,
         row_factors: I,
-        is_integer: bool,
+        var_type: i32,
     ) {
         self.matrix
             .astart
@@ -105,6 +106,6 @@ impl Problem<ColMatrix> {
             self.matrix.aindex.push(row.0);
             self.matrix.avalue.push(factor);
         }
-        self.add_column_inner(col_factor, bounds, is_integer);
+        self.add_column_inner(col_factor, bounds, var_type);
     }
 }
