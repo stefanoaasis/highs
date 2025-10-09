@@ -29,7 +29,7 @@ fn main() {
 }
 ```
 
-#### Building a problem constraint by constraint
+#### Building a problem 
 
 ```rust
 use highs::*;
